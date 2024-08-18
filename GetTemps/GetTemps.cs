@@ -52,7 +52,9 @@ namespace GetTemps;
 // "sid": "KCQT"
 //
 
-public sealed class GetTemps(ILogger<GetTemps> _logger) : BackgroundService
+public sealed class GetTemps(
+    ILogger<GetTemps> _logger,
+    IHostApplicationLifetime _hostApplicationLifetime) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -70,5 +72,6 @@ public sealed class GetTemps(ILogger<GetTemps> _logger) : BackgroundService
         var body = await response.Content.ReadAsStringAsync(stoppingToken);
 
         _logger.LogInformation("Response body: {body}", body);
+        _hostApplicationLifetime.StopApplication();
     }
 }
