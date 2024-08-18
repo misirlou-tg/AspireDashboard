@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace GetTemps;
 
 //
@@ -54,12 +56,19 @@ public sealed class GetTemps(ILogger<GetTemps> _logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var stnDataParams = JsonSerializer.Serialize(
+            new StnDataParams("KCQT", new DateOnly(2024, 8, 1), new DateOnly(2024, 8, 16)));
+
         var httpClient = new HttpClient
         {
             BaseAddress = new Uri("https://data.rcc-acis.org")
         };
-        var response = await httpClient.GetAsync("/StnData", stoppingToken);
+        var response = await httpClient.PostAsync(
+            "/StnData",
+            new FormUrlEncodedContent([new("params", stnDataParams), new("output", "json")]),
+            stoppingToken);
         var body = await response.Content.ReadAsStringAsync(stoppingToken);
+
         _logger.LogInformation("Response body: {body}", body);
     }
 }
