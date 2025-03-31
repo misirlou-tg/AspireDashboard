@@ -1,8 +1,23 @@
 using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace GetTemps;
+
+//
+// I started this after watching a video (see comments in the code) where
+// he said it was possible to add OpenTelemetry integration to an existing
+// program and have send that info to the Aspire dashboard that runs in
+// a container.
+//
+// This link discusses how to use the "standalone" Aspire dashboard:
+// https://learn.microsoft.com/en-us/dotnet/core/diagnostics/observability-otlp-example
+// More good OpenTelemetry, includes a link to a "fully functional" example:
+// https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Extensions.Hosting/README.md
+// Good overviews, etc, links to MS reference docs:
+// https://opentelemetry.io/docs/languages/dotnet/
+//
 
 public class Program
 {
@@ -20,11 +35,10 @@ public class Program
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
         });
-        // TODO: If this is not a suitable default change to add OtlpExporters only if the config is present
-        var otlpEndpoint = new Uri(builder.Configuration["OTLP_ENDPOINT_URL"] ?? "https://otel:4317");
+        // See where to push the telemetry to, default to local
+        var otlpEndpoint = new Uri(builder.Configuration["OTLP_ENDPOINT_URL"] ?? "http://localhost:4317");
         builder.Services.AddOpenTelemetry()
             .ConfigureResource(c => c.AddService("GetTemps"))
-            //.WithMetrics(metrics =>
             // The video "stopped" here, couldn't see what was in WithMetrics (or below)
             // Did see his usings, Metrics, Resources, Traces (but NOT Logs)
             .WithTracing(tracing =>
@@ -39,6 +53,15 @@ public class Program
             .WithLogging(logging =>
             {
                 logging.AddOtlpExporter(otlpOptions =>
+                {
+                    otlpOptions.Endpoint = otlpEndpoint;
+                });
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics.AddHttpClientInstrumentation();
+                metrics.AddRuntimeInstrumentation();
+                metrics.AddOtlpExporter(otlpOptions =>
                 {
                     otlpOptions.Endpoint = otlpEndpoint;
                 });
