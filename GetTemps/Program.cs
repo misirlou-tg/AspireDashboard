@@ -35,10 +35,14 @@ public class Program
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
         });
+
         // See where to push the telemetry to, default to local
         var otlpEndpoint = new Uri(builder.Configuration["OTLP_ENDPOINT_URL"] ?? "http://localhost:4317");
+        // You can tell the exporters the protocol also, gRPC is the default
+        //var otlpProtocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+
         builder.Services.AddOpenTelemetry()
-            .ConfigureResource(c => c.AddService("GetTemps"))
+            .ConfigureResource(c => c.AddService("GetTemps")) // Could also supply service version & instance ID
             // The video "stopped" here, couldn't see what was in WithMetrics (or below)
             // Did see his usings, Metrics, Resources, Traces (but NOT Logs)
             .WithTracing(tracing =>
