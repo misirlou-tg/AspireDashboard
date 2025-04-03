@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace GetTemps;
@@ -56,11 +57,18 @@ public sealed class GetTemps(
     ILogger<GetTemps> _logger,
     IHostApplicationLifetime _hostApplicationLifetime) : BackgroundService
 {
+    public const string ACTIVITY_SOURCE_NAME = "GetTemps.GetTemps";
+
+    private readonly static ActivitySource s_source = new(ACTIVITY_SOURCE_NAME);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var stnDataParams = JsonSerializer.Serialize(
             new StnDataParams("KCQT", new DateOnly(2024, 8, 1), new DateOnly(2024, 8, 16)));
 
+        // Starting an activity will associate the tracing & logging that
+        // follows with it so the dashboard will know that they are related
+        using var activity = s_source.StartActivity("GetTemps");
         var httpClient = new HttpClient
         {
             BaseAddress = new Uri("https://data.rcc-acis.org")
@@ -72,6 +80,9 @@ public sealed class GetTemps(
         var body = await response.Content.ReadAsStringAsync(stoppingToken);
 
         _logger.LogInformation("Response body: {body}", body);
+
+        // It is safe to call this here because this just requests termination
+        // of the application by signalling the stoppingToken
         _hostApplicationLifetime.StopApplication();
     }
 }

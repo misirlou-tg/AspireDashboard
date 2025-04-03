@@ -17,6 +17,8 @@ namespace GetTemps;
 // https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Extensions.Hosting/README.md
 // Good overviews, etc, links to MS reference docs:
 // https://opentelemetry.io/docs/languages/dotnet/
+// Good overview on distributed tracing:
+// https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing
 //
 
 public class Program
@@ -48,6 +50,7 @@ public class Program
             .WithTracing(tracing =>
             {
                 tracing.AddHttpClientInstrumentation()
+                    .AddSource(GetTemps.ACTIVITY_SOURCE_NAME) // This class creates activities
                     .AddOtlpExporter(otlpOptions =>
                     {
                         otlpOptions.Endpoint = otlpEndpoint;
