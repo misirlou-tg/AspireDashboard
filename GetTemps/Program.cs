@@ -30,10 +30,10 @@ public class Program
         // (skip ahead to 33:20)
         // https://learn.microsoft.com/en-us/dotnet/core/diagnostics/observability-with-otel#5-configure-opentelemetry-with-the-correct-providers
         // https://opentelemetry.io/docs/languages/net/exporters/
-        builder.Logging.AddOpenTelemetry(logging =>
+        builder.Logging.AddOpenTelemetry(options =>
         {
-            logging.IncludeFormattedMessage = true;
-            logging.IncludeScopes = true;
+            options.IncludeFormattedMessage = true;
+            options.IncludeScopes = true;
         });
 
         // See where to push the telemetry to, default to local
@@ -47,11 +47,11 @@ public class Program
             // Did see his usings, Metrics, Resources, Traces (but NOT Logs)
             .WithTracing(tracing =>
             {
-                tracing.AddHttpClientInstrumentation();
-                tracing.AddOtlpExporter(otlpOptions =>
-                {
-                    otlpOptions.Endpoint = otlpEndpoint;
-                });
+                tracing.AddHttpClientInstrumentation()
+                    .AddOtlpExporter(otlpOptions =>
+                    {
+                        otlpOptions.Endpoint = otlpEndpoint;
+                    });
             })
             // Without this I didn't see any ILogger output on the Structured "tab"
             .WithLogging(logging =>
@@ -63,12 +63,12 @@ public class Program
             })
             .WithMetrics(metrics =>
             {
-                metrics.AddHttpClientInstrumentation();
-                metrics.AddRuntimeInstrumentation();
-                metrics.AddOtlpExporter(otlpOptions =>
-                {
-                    otlpOptions.Endpoint = otlpEndpoint;
-                });
+                metrics.AddHttpClientInstrumentation()
+                    .AddRuntimeInstrumentation()
+                    .AddOtlpExporter(otlpOptions =>
+                    {
+                        otlpOptions.Endpoint = otlpEndpoint;
+                    });
             });
 
         builder.Services.AddHostedService<GetTemps>();
